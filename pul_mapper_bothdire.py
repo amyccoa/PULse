@@ -21,15 +21,14 @@ faahits = []
 
 #process marker genes and find nearby genes in faa
 with open(in_marker, 'r') as markerlist, open(in_faa, 'r') as faa, open(in_cazyme, 'r') as cazyme, open(in_pfam, 'r') as pfam, open(outfi, 'w') as ou:
-    marker_lines = list(markerlist)  #read all marker lines
-    faa_lines = list(faa) #read all faa lines
-    cazyme_lines = list(cazyme)  #read all cazyme lines
-    pfam_lines = list(pfam)  #read all pfam lines
+    marker_lines = list(markerlist)  
+    faa_lines = list(faa) 
+    cazyme_lines = list(cazyme)  
+    pfam_lines = list(pfam)  
 
     for marker_line in marker_lines:
         Parts = marker_line.strip().split('\t')
         if len(Parts) < 5:
-            #print(f"Skipping malformed marker line: {marker_line.strip()}")  #used for debugging, remove later
             continue
 
         try:
@@ -38,29 +37,27 @@ with open(in_marker, 'r') as markerlist, open(in_faa, 'r') as faa, open(in_cazym
             MarkerStart = int(Parts[3])
             MarkerEnd = int(Parts[4])
         except ValueError:
-            #print(f"Skipping marker line with invalid start/end positions: {marker_line.strip()}") #used for debugging, remove later
             continue
-
-        #print(f"Processing marker: {M_susD_ID}, Start: {MarkerStart}, End: {MarkerEnd}")
 
         found_marker = False
         for i, faa_line in enumerate(faa_lines):
-            if faa_line.startswith(">"):  #check if it's a protein line
+            if faa_line.startswith(">"):  
                 faaParts = faa_line.strip().split()
-                faaID = faaParts[0].lstrip(">")  #remove ">" from the FAA ID
-                if faaID == M_susD_ID or faaID == M_tonB_ID:  #match the exact MarkerID
+                faaID = faaParts[0].lstrip(">")  
+                if faaID == M_susD_ID or faaID == M_tonB_ID:  
                     found_marker = True
 
-                    #lists for storing results
+                    
                     upstream_results = []
                     downstream_results = []
 
-                    #Downstream search
+#~#~#~#~#~#~#~#~#Downstream search
+
                     downstream_counter = 0  
                     current_marker_end = MarkerEnd  
                     for j in range(i + 1, len(faa_lines)):
                         next_faa_line = faa_lines[j]
-                        if next_faa_line.startswith(">"):  #check for protein description lines
+                        if next_faa_line.startswith(">"):  
                             next_faaParts = next_faa_line.strip().split()
                             try:
                                 next_faaID = next_faaParts[0].lstrip(">")
@@ -96,16 +93,16 @@ with open(in_marker, 'r') as markerlist, open(in_faa, 'r') as faa, open(in_cazym
 
                                 pfam_string = ", ".join(pfam_matches) if pfam_matches else "None"
 
-                                downstream_results.append(f"Gene: {next_faaID}, Start: {next_faaStart}, End: {next_faaEnd}, CAZymes: {cazyme_string}, pfam: {pfam_string}")
+                                downstream_results.append(f"{next_faaID}, {next_faaStart}, {next_faaEnd}, CAZymes: {cazyme_string}, pfam: {pfam_string}")
 
                                 if cazyme_matches or any(
                                     any(x in pfam for x in ["SusD", "TonB", "CarboxypepD_reg", "TPR", "Glyco_hydro", "HTH_18", "SASA", "HisKA", "AraC", "DUF"])
                                     for pfam in pfam_matches
                                 ):
-                                    downstream_counter = 0  # Reset counter if we find a qualifying gene
+                                    downstream_counter = 0
                                 else:
-                                    downstream_counter += 1  # Increment only for non-qualifying genes
-                                    if downstream_counter >= 4:  # Break only after 4 consecutive non-qualifying genes
+                                    downstream_counter += 1
+                                    if downstream_counter >= 4:
                                         break
 
                                 #update current_marker_end to the end of the current protein
@@ -114,7 +111,10 @@ with open(in_marker, 'r') as markerlist, open(in_faa, 'r') as faa, open(in_cazym
                                 #stop checking if the next protein is not within 500bp
                                 break
 
-                    # Upstream search
+
+
+#~#~#~#~#~#~#~#~#Upstream Search
+
                     upstream_counter = 0  
                     current_marker_start = MarkerStart  
                     for j in range(i - 1, -1, -1):  #iterates backward = upstream
@@ -153,41 +153,34 @@ with open(in_marker, 'r') as markerlist, open(in_faa, 'r') as faa, open(in_cazym
                                         pfam_matches.append(pfamDescription)
                                 pfam_string = ", ".join(pfam_matches) if pfam_matches else "None"
 
-                                upstream_results.append(f"Gene: {prev_faaID}, Start: {prev_faaStart}, End: {prev_faaEnd}, CAZymes: {cazyme_string}, pfam: {pfam_string}")
+                                upstream_results.append(f"{prev_faaID}, {prev_faaStart}, {prev_faaEnd}, CAZymes: {cazyme_string}, pfam: {pfam_string}")
 
                                 if cazyme_matches or any(
                                     any(x in pfam for x in ["SusD", "TonB", "CarboxypepD_reg", "TPR", "Glyco_hydro", "HTH_18", "SASA", "HisKA", "AraC", "DUF"])
                                     for pfam in pfam_matches
                                 ):
-                                    upstream_counter = 0  # Reset counter if we find a qualifying gene
+                                    upstream_counter = 0
                                 else:
-                                    #increment the counter if no CAZyme matches are found
-                                    upstream_counter += 1  # Increment only for non-qualifying genes
-                                    if upstream_counter >= 4:  # Break only after 4 consecutive non-qualifying genes
+                                    upstream_counter += 1
+                                    if upstream_counter >= 4:
                                         break
 
-                                # update current_marker_start to the start of the current protein
                                 current_marker_start = prev_faaStart
                             else:
-                                #stops checking if the previous protein is not within 500bp
                                 break
 
-                    # Write results for BOTH upstream and downstream
+                    #
                     ou.write(f"Marker: {M_susD_ID}, Start: {MarkerStart}, End: {MarkerEnd}\n")
-                    
-                    # Downstream results
+
                     ou.write(f"  Downstream:\n")
                     for result in downstream_results:
                         ou.write(f"\t{result}\n")
-                    
-
-                    # Upstream results  
+                     
                     ou.write(f"  Upstream:\n")
                     for result in upstream_results:
                         ou.write(f"\t{result}\n")
-
                     
-                    ou.write(f"\n")  #spacing between markers
+                    ou.write(f"\n")  
 
                     print(f"Processed {M_susD_ID}: {len(upstream_results)} upstream, {len(downstream_results)} downstream results.")
                     
