@@ -74,10 +74,10 @@ with open(infi, 'r') as fi, open(outfi, 'w') as ou:
             #write to file, if found and within 500bp
             if found_above:
                 ou.write(f"SusD+TonB pair found\t{susdID}\t{tonbID}\t{tonbStart}\t{susdEnd}\n")
-                print(f"SusD+TonB pair found: {susdID}\t{tonbID}")  #debugging output
+                #print(f"SusD+TonB pair found: {susdID}\t{tonbID}")  #debugging output
             if found_below:
                 ou.write(f"SusD+TonB pair found\t{susdID}\t{tonbID}\t{susdStart}\t{tonbEnd}\n")
-                print(f"SusD+TonB pair found: {susdID}\t{tonbID}")  #debugging output
+                #print(f"SusD+TonB pair found: {susdID}\t{tonbID}")  #debugging output
 
             #add peeked lines back to the buffer
             for line in reversed(check_lines):

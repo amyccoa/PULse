@@ -17,7 +17,7 @@ for file in os.listdir(input_directory):
     if file.endswith(".fa"):
         genome_name = os.path.splitext(file)[0] 
         input_path = os.path.join(input_directory, file)
-        output_path = os.path.join(output_directory, f"formatted_{file}")
+        output_path = os.path.join(output_directory, f"{file}")
 
         with open(input_path, "r") as infile, open(output_path, "w") as outfile:
             contig = ""
